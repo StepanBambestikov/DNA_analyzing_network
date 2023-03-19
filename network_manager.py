@@ -1,7 +1,7 @@
 import torch
 import torch.optim as optim
 
-import network_model_service as nn_service
+import network_service as nn_service
 
 
 def save_network_ensemble(max_attempts_number, train_loader, val_loader, train_epoch_number, network_type):

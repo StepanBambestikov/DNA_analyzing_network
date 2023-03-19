@@ -1,5 +1,5 @@
 
-#excel parameters
+#excel file parameters
 
 first_row = 6
 

@@ -44,7 +44,7 @@ class ConvNetwork1d(nn.Sequential):
 class ConvNetwork2d(nn.Sequential):
     def __init__(self):
         super().__init__(
-            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 2)), #maybe kernel_size=(2, 2)
+            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(4, 2)), #(4, 2)
             nn.ReLU(inplace=True),
             #nn.BatchNorm2d(20),
             nn.MaxPool2d(kernel_size=(2, 2)),
