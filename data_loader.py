@@ -3,17 +3,18 @@ import torch
 from torch.utils.data import SubsetRandomSampler
 import pandas as pd
 from torch.utils.data import TensorDataset
+from dna_enumeration import BASE_1D, BASE_2D
 
 dna_bases_count = 4
-dna_base_dict = {'a': 2, 't': 3, 'c': 4, 'g': 5}
-dna_binary_view = {'a': 0, 't': 1, 'c': 2, 'g': 3}
+dna_base_dict = {'a': BASE_1D.A, 't': BASE_1D.T, 'c': BASE_1D.C, 'g': BASE_1D.G}#add padding
+dna_binary_view = {'a': BASE_2D.A, 't': BASE_2D.T, 'c': BASE_2D.C, 'g': BASE_2D.G}
 
 
 def make_1d_from_text_dna(text_dna_array):
     max_string_size = len(max(text_dna_array, key=len)) + 1
     data_features = np.zeros((text_dna_array.shape[0], max_string_size))
     for data_row_index, current_str in enumerate(text_dna_array):
-        for data_col_index, current_symbol in enumerate(current_str[0]):
+        for data_col_index, current_symbol in enumerate(current_str):
             data_features[data_row_index, data_col_index + 1] = dna_base_dict[current_symbol]
     return data_features
 
@@ -26,7 +27,7 @@ def make_2d_data_from_text_dna(text_dna_array):
 
     data_features = np.zeros((text_dna_array.shape[0], dna_bases_count + summary_padding, max_string_size))
     for data_row_index, current_str in enumerate(text_dna_array):
-        for data_col_index, current_symbol in enumerate(current_str[0]):
+        for data_col_index, current_symbol in enumerate(current_str):
             data_features[data_row_index, dna_binary_view[current_symbol] + first_axis_padding,
                                           data_col_index + second_axis_padding] = 1
     return data_features
@@ -36,7 +37,7 @@ def get_dataset_from_excel_file(file_name, label_column_number, begin_feature_co
                                 dna_to_numeric_strategy=None, first_row=0):
     raw_data_array = pd.read_excel(file_name, header=None).to_numpy()
     if dna_to_numeric_strategy is not None:
-        raw_features = dna_to_numeric_strategy(raw_data_array[first_row:, begin_feature_column: end_feature_column])
+        raw_features = dna_to_numeric_strategy(raw_data_array[first_row:, begin_feature_column])
         # translating dna text into numeric matrix or numeric string
     else:
         raw_features = raw_data_array[first_row:, begin_feature_column: end_feature_column].astype('float32')
