@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 class BASE_1D(IntEnum):
     A = 2
     T = 3

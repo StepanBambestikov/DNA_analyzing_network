@@ -14,11 +14,12 @@ def complementary_pair_maker_from_2d(dna_row):
     return torch.flip(dna_row_copy, dims=(1,))
 
 
-class complementarity_butch_adder:
+class complementarity_butch_manager:
     def __init__(self, butch_size, complementarity_additive_size, complementary_pair_maker):
         self.butch_size = butch_size
         self.complementarity_additive_size = complementarity_additive_size
         self.complementary_pair_maker = complementary_pair_maker
+        self.has_butch_info = False
 
     def __call__(self, butch, ground_truth):
         butch_size = len(butch)
@@ -36,4 +37,43 @@ class complementarity_butch_adder:
             ground_truth[complement_row_index] = ground_truth[origin_row_index]
 
         complementary_bonds_indexes = np.column_stack((origin_rows_indices, complementary_rows_indices))
+
+        self.has_butch_info = True
         return complementary_bonds_indexes
+
+
+class complementarity_butch_filler:
+    def __init__(self, butch_size, complementarity_additive_size, complementary_pair_maker):
+        self.butch_manager = complementarity_butch_manager(butch_size, complementarity_additive_size,
+                                                           complementary_pair_maker)
+        self.has_butch_info = False
+
+    def __call__(self, butch, ground_truth):
+        self.butch_manager(butch, ground_truth)
+
+
+class butch_noise_adder:
+    def __init__(self, mean, sigma, noise_ground_truth=False, noise_butch=False):
+        self.mean = mean
+        self.sigma = sigma
+        self.has_butch_info = False
+        self.noise_ground_truth = noise_ground_truth
+        self.noise_butch = noise_butch
+
+    def _noise_array(self, array):
+        numpy_array = array.detach().numpy()
+        butch_noise_additive = np.random.normal(self.mean, self.sigma, size=numpy_array.shape)
+        # for butch_row in range(butch.shape[0]):
+        #     butch_noise_additive = np.random.normal(self.mean, self.sigma, size=butch_numpy.shape[1])
+        #     butch[butch_row] += butch_noise_additive
+        numpy_array += butch_noise_additive
+
+    def __call__(self, butch, ground_truth):
+        array_list = []
+        if self.noise_ground_truth is True:
+            array_list.append(ground_truth)
+        if self.noise_butch is True:
+            array_list.append(butch)
+
+        for current_array in array_list:
+            self._noise_array(current_array)
