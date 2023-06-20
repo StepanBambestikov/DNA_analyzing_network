@@ -1,43 +1,39 @@
-import numpy as np
-import torch.optim as optim
-import torch
-import data_loader as loader
-import network_service as nn_service
-import prediction_analyzer as pl
-
-import network_classes as networks
-import excel_parameters as constant
 import pandas as pd
+
+import classes3
+import model_selection as ms
+import network_classes as networks
 import loss
+import classes2
+import Na_loader
 
+# model_types = [networks.linear_classifier, networks.SimpleNetwork, networks.two_layer_network]
+# model_names = ["linear_classifier", "SimpleNetwork", "two_layer_network"]
+# conv_factors = [False, False, False]
+# model_types = [networks.dna_2d_linear_classifier]
+# model_names = ["dna_2d_linear_classifier"]
+# conv_factors = [False]
+# model_types = [networks.ConvNetwork2d, networks.dna_1d_linear_classifier]
+# model_names = ["lConvNetwork2d", "dna_2d_linear_classifier"]
+# conv_factors = [True, False]
+model_name = "conv2d_net_18_05"
+model_types = [classes3.conv2d_Mg_net_24_05]
+model_names = [model_name]
+conv_factors = [True]
+origin_data_type = ms.Data_types.Na_D2
+#
+# model_types_evaluations = ms.models_analysis(model_types, model_names, conv_factors, origin_data_type,
+#                                              ms.train_and_evaluate_models_for_all_parameters)
+# ms.predictions_plotting(model_types_evaluations)
+loss_name = "l1_loss_absolute_Tm"
+losses = {loss_name: loss.normalized_l1_multi_loss_30_04_relative_Tm}
 
-if __name__ == '__main__':
-    butch_size = 64
-    epoch_number = 500
-
-    dataset = loader.get_dataset_from_excel_file("ML_Stepan.xlsx", label_column_number=constant.dH_column_number,
-                                                 begin_feature_column=constant.begin_feature_column,
-                                                 end_feature_column=constant.end_feature_column,
-                                                 dna_to_numeric_strategy=None, first_row=constant.first_row)
-    #dna data
-    # dataset = ds.get_dataset_from_excel_file("ML_Stepan.xlsx", label_column_number=constant.dG_column_number,
-    #                                          begin_feature_column=constant.dna_feature_column_number,
-    #                                          end_feature_column=None,
-    #                                          dna_to_numeric_strategy=ds.make_2d_data_from_text_dna,
-    #                                          first_row=constant.first_row)
-
-
-
-    train_loader, val_loader = loader.get_train_and_val_loaders(dataset, butch_size)
-
-    nn_model = networks.SimpleNetwork()
-
-    # loss = torch.nn.MSELoss().type(torch.FloatTensor)
-    optimizer = optim.Adam(nn_model.parameters(), lr=0.001)
-    train_loss_history, val_loss_history, train_error_history, val_error_history = nn_service.train_model(nn_model,
-                                                                                                          train_loader, val_loader, loss.normalized_l2_loss, optimizer, epoch_number, is_convolution_training=True)
-    print(np.min(val_error_history[val_error_history > 0]))
-    nn_service.plot_train_history(train_loss_history, val_loss_history, train_error_history, val_error_history)
-
-    nn_model = networks.SimpleNetwork()
-    nn_model.load_state_dict(torch.load("dH_model"))
+model_types_evaluations, dna_activity_columns, models = ms.models_analysis(model_types, model_names, conv_factors,
+                                                                           origin_data_type,
+                                                                           ms.train_and_evaluate_multi_model, losses,
+                                                                           train_val_splitter=Na_loader.multi_splitter)
+ms.predictions_plotting(model_types_evaluations)
+ms.save_model(models[0], model_name + loss_name)
+ms.save_predictions(model_types_evaluations, "_save.xlsx", pandas_load_method=pd.DataFrame.to_excel,
+                    train_additive_columns=dna_activity_columns[0],
+                    val_additive_columns=dna_activity_columns[1])
